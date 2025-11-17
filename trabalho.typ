@@ -135,3 +135,11 @@ $
        & = 248
 $
 
+Uma implicação importante dessa aproximação por blocos, é que o número de estados do autômato cresce
+rapidamente com valores maiores de $n$, enquanto valores menores de $n$ aumentam a taxa de colisões.
+Então é preciso escolher um valor apropriado de $n$ que balanceie a complexidade do autômato e
+segurança do algorítmo.
+
+Um resultado interessante desse sistema é que GLCs não conseguem gerar palavras do tipo $w w$, mas
+estamos aproximando esse comportamento usando esse algoritmo. A precisão dessa linguagem se aproxima
+da ideal na medida que $n -> inf$.
