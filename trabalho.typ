@@ -65,15 +65,38 @@ função de hash, e $p(x)$ sendo o mapeamento de um símbolo para um número:
 $ h(w) = sum_(k=1)^n p(x_k) $
 
 Esse algoritmo é simples de implementar e garante que palavras iguais resultam no mesmo _hash_.
-Entretanto, o número de colisões é muito alto, considerando que permutações da mesma palavra criam
-_hashes_ iguais, devido à natureza comutativa da adição.
+Entretanto, o número de colisões é muito alto, considerando que permutações (anagramas) da mesma
+palavra criam _hashes_ iguais, devido à natureza comutativa da adição.
 
 === Segunda Iteração
 Para resolvermos o problema das colisões, precisamos que a posição do símbolo na palavra influencie
-o seu valor na soma do _hash_. Um método ideal seria multiplicar o $p(x)$ pela posição do símbolo
+o seu valor na soma do _hash_. Um bom método seria multiplicar o $p(x)$ pela posição do símbolo
 antes de adicionar à soma:
 
 $ h(w) = sum_(k=1)^n k * p(x_k) $
 Como a pilha já está sendo utilizada, precisamos codificar a informação da posição do símbolo nos
 estados. Isso traz outro problema: os estados são finitos, enquanto as palavras têm tamanho
 arbitrário.
+
+=== Terceira Iteração
+Um modo de diminuir mais ainda a taxa das colisões seria ao invés de multiplicar o $p(x)$ pela
+posição do símbolo, fazer uma mudança de base da palavra para um número unário.
+
+Primeiro é preciso definir qual a base da palavra de entrada. Sabendo que a base de qualquer sistema
+numérico é o tamanho do conjunto de dígitos (ex: a base decimal contém {0, 1, 2, 3, 4, 5, 6, 7, 8,
+9} = 10 dígitos), podemos definir a base da nossa palavra como o tamanho do alfabeto de entrada
+$Sigma$.
+
+Com a base definida, podemos fazer a operação de mudança de bases calculando a soma de todos os
+valores numéricos dos caracteres da palavra multiplicados pela base elevada à posição do caracter.
+Definindo a base do alfabeto de entrada como $b$, temos:
+
+$ h(w) = sum_(k=0)^(n-1) b^n * p(x_k) $
+
+Interpretando a palavra como um número de base $b$, se nota que os dígitos do número estão
+invertidos, com o digíto menos significativo mais à esquerda. Entretanto, isso se torna irrelevante
+visto que o valor em si do número não importa, mas apenas que palavras iguais gerem o mesmo número.
+
+Também vemos que o valor do número cresce de forma exponencial em relação ao tamanho da palavra.
+Esse problema também é irrelevante dado que o modelo teórico de um autômato de pilha possui memória
+infinita.
