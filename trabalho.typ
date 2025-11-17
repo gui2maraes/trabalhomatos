@@ -91,7 +91,7 @@ Com a base definida, podemos fazer a operação de mudança de bases calculando 
 valores numéricos dos caracteres da palavra multiplicados pela base elevada à posição do caracter.
 Definindo a base do alfabeto de entrada como $b$, temos:
 
-$ h(w) = sum_(k=0)^(n-1) b^n * p(x_k) $
+$ h(w) = sum_(k=0)^(n-1) b^k * p(x_k) $
 
 Interpretando a palavra como um número de base $b$, se nota que os dígitos do número estão
 invertidos, com o digíto menos significativo mais à esquerda. Entretanto, isso se torna irrelevante
@@ -100,3 +100,38 @@ visto que o valor em si do número não importa, mas apenas que palavras iguais 
 Também vemos que o valor do número cresce de forma exponencial em relação ao tamanho da palavra.
 Esse problema também é irrelevante dado que o modelo teórico de um autômato de pilha possui memória
 infinita.
+
+=== O Problema
+O problema principal desse algorítmo é que autômatos com pilha não conseguem calcular exponenciais
+nem multiplicações por números arbitrários. Então é nesse momento que é preciso introduzir uma
+aproximação do comportamento ideal.
+
+O caminho encontrado foi dividir a palavra em blocos de tamanho $m$, e calcular os exponenciais
+módulo $m$. Como $m$ é finito, podemos precalcular o valor dos exponenciais, e transformar as
+operações do algorítmo em uma multiplicação por uma constante (o que sabemos que é possível fazer).
+Assim, o algorítmo final seria:
+
+$ h(w) = sum_(k=0)^(n-1) b^(k mod m) * p(x_k) $
+
+Um exemplo desse algorítmo usando um alfabeto $Sigma = {a, b, c, d, e, f}$ e base $6$:
+
+Primeiro definimos o mapeamento $p(x) = {(a, 1), (b, 2), (c, 3), (d, 4), (e, 5), (f, 6)}$, a palavra
+$w = op("abcd")$, e o tamanho de bloco $m = 4:$
+
+$
+  h(w) & = p(a) * 6^(0 mod 4) + p(b) * 6^(1 mod 4) + p(c) * 6^(2 mod 4) + p(d) * 6^(3 mod 4) \
+       & = 1 * 6^0 + 2 * 6^1 + 3 * 6^2 + 4 * 6^3 \
+       & = 1 * 1 + 2 * 6 + 3 * 36 + 4 * 216 \
+       & = 985
+$
+
+Outro exemplo com $w = op("bcefaa")$ e $m = 3$:
+
+$
+  h(w) & = p(b) * 6^(0 mod 3) + p(c) * 6^(1 mod 3) + p(e) * 6^(2 mod 3) + p(f) * 6^(3 mod 3) +
+         p(a) * 6^(4 mod 3) + p(a) * 6^(5 mod 3) \
+       & = 2 * 6^0 + 3 * 6^1 + 5 * 6^2 + 6 * 6^0 + 1 * 6^1 + 1 * 6^2 \
+       & = 2 * 1 + 3 * 6 + 5 * 36 + 6 * 1 + 1 * 6 + 1 * 36 \
+       & = 248
+$
+
