@@ -159,38 +159,39 @@ $
 
 === Análise
 Essa aproximação transforma a linguagem reconhecida de uma que reconhece palavras iguais para uma
-que reconhece permutações de sequências de blocos com tamanho $m$. Por exemplo, para $m = 3$,
-$op("abcdef") = op("defabc")$. Assim, quanto menor for $m$, maior será a taxa de colisões, com
-$m = 1$ sendo equivalente à primeira iteração do algoritmo. Nesse mesmo sentido, na medida que
-$m -> inf$, a linguagem se aproxima do comportamento ideal $w w^r$. Veremos que o valor de $m$
-influencia diretamente na quantidade de estados do autômato.
-
+que reconhece palavras com a mesma soma total de seus blocos de tamanho $m$. Por exemplo, para
+$m = 3$, $op("abcdef") = op("defabc")$. Assim, quanto menor for $m$, maior será a taxa de colisões,
+com $m = 1$ sendo equivalente à primeira iteração do algoritmo. Nesse mesmo sentido, na medida que
+$m -> inf$, a linguagem se aproxima do comportamento ideal $w w^r$. Vale notar que também seria
+possível um algoritmo que enumera as possíveis permutações de um bloco através de estados, mas esse
+resultaria em uma explosão combinatória do número de estados. Veremos que o valor de $m$ influencia
+de forma linear a quantidade de estados da nossa solução.
 
 == Implementação
-Iremos modelar um sistema simples de reconhecimento de senha. O sistema possui apenas duas ações:
-cadastrar uma senha e tentar acessar o sistema pela senha. Infelizmente não é possível reutilizar
-uma senha cadastrada para tentar o acesso repetidamente, então o sistema possuirá uma autenticação
-de senha de uso único.
+Iremos modelar um sistema simples de cadastro de senha, na qual é preciso primeiro definir a senha e
+depois confirmá-la. O sistema possui apenas duas ações: escrever a senha, utilizando os símbolos do
+alfabeto de entrada, e o _enter_, para sinalizar o final da senha, e será representado por um
+símbolo extra.
 
 Um alfabeto de entrada simples será utilizado por motivos de praticidade, mas é possível integrar
-esse sistema à primeira etapa do trabalho para serem permitidas apenas senhas fortes. Também é
-preciso escolher um valor de $m$, que definirá a complexidade e segurança do sistema. Será mostrado
-um método de construção de um autômato para um $m$ arbitrário, mas a implementação usará um $m$
-pequeno, também por motivos de simplicidade.
+esse sistema à primeira etapa do trabalho para serem permitidas apenas senhas fortes, visto que a
+interseção entre uma LLC e uma linguagem regular sempre resulta em outra LLC. Também é preciso
+escolher um valor de $m$, que definirá a complexidade e precisão do sistema. Será mostrado um método
+de construção de um autômato para um $m$ arbitrário, mas a implementação usará um $m$ pequeno,
+também por motivos de simplicidade.
 
-Será usado um subconjunto do alfabeto latino como alfabeto de entrada + um símbolo para denotar o
-fim da palavra, ou a ação de registrar a senha (usaremos o símbolo '\#')
-$Sigma = {a,b,c,d,e,f,g,h,i, \#}$, a base $b = 10$ e
-$p(x) = {(a,1), (b,2), (c,3), (d,4), (e,5), (f,6), (g,7), (h,8), (i,9)}$. Os estados serão divididos
-em duas fases: cadastro e autenticação. A primeira fase será responsável por ler os símbolos da
-primeira palavra e empilhar seu valor correspondente, enquanto a segunda fase lerá os símbolos da
-segunda palavra e desempilhar seus valores. A condição de aceite será ter uma pilha vazia ao fim da
-entrada. Assim, a linguagem ideal que queremos aproximar é $L = {w\#w\#}$. O alfabeto da pilha será
-apenas o símbolo para representar o número unário e um símbolo para o início da pilha:
-$Gamma = {x, Z}$.
+Serão usadas as letras _a_ a _i_ como alfabeto de entrada + um símbolo para denotar o fim da
+palavra / ação de registrar a senha (usaremos o símbolo '\#'), então:
+$Sigma = {a,b,c,d,e,f,g,h,i, \#}$, a base $b = 10$, $m = 3$ e $p(x) = "posição de "x" no alfabeto"$.
+Os estados serão divididos em duas fases: cadastro e confirmação. A primeira fase será responsável
+por ler os símbolos da primeira palavra e empilhar seu valor correspondente, enquanto a segunda fase
+lerá os símbolos da segunda palavra e desempilhar seus valores. A condição de aceite será ter uma
+pilha vazia ao fim da entrada. Assim, a linguagem ideal que queremos aproximar é $L = {w\#w\#}$. O
+alfabeto da pilha será apenas o símbolo para representar o número unário e um símbolo para o início
+da pilha: $Gamma = {x, Z}$.
 
-O número de estados será $2m + 1$, para guardar a posição atual do bloco em cada fase, mais um
-estado final. Em ambas as fases, cada estado $q_i$ lerá o próximo símbolo da palavra,
+O número de estados será $2m + 1$ (guardar a posição atual do bloco em cada fase, mais um estado
+final). Em ambas as fases, cada estado $q_i$ lerá o próximo símbolo da palavra,
 empilhará/desempilhará o número de dígitos unários correspondentes, e passará para o estado
 $q_((i+1) mod m)$. Caso encontrem o símbolo '\#', a primeira fase passará para a segunda, e a
 segunda irá aceitar ou rejeitar a entrada, a depender do estado da pilha. Os números a serem
@@ -232,80 +233,169 @@ manipulados, após serem precalculados, podem ser modelados com a seguinte tabel
     [$x^(700)$],
     [$x^(800)$],
     [$x^(900)$],
-
-    [3],
-    [$x^(1000)$],
-    [$x^(2000)$],
-    [$x^(3000)$],
-    [$x^(4000)$],
-    [$x^(5000)$],
-    [$x^(6000)$],
-    [$x^(7000)$],
-    [$x^(8000)$],
-    [$x^(9000)$],
   ),
   caption: [Exemplo de tabela de números precalculados para $m = 3$],
 )
 
-Segue a definição formal desse autômato para $m = 4$:
+=== Algumas Palavras Aceitas e Rejeitadas
 
-$ M = (Q, Sigma, Gamma, delta, q_0, Z, F) $, onde:
-$
-  & Q = {q_0, q_1, q_2, q_3, r_0, r_1, r_2, r_3, r_f} \
-  & Sigma = {a, b, c, d, e, f, g, h, i, \#} \
-  & Gamma = {x, Z} \
-  & F = {r_f}
-$
+Aceitas:
+- abc\#abc\#
+- abcdef\#abcdef\#
+- abcdef\#defabc\#
+- gabi\#gabi\#
+- aaaaaa\#bbb\#
+- ccc\#bbbaaa\#
+- abcdefghi\#abcdefghi\#
 
-Segue a tabela de transições $delta$:
+Rejeitadas:
+- abc\#cba\#
+- abc\#def\#
+- aaabbb\#ababab\#
+- abcdefghi\#aacdefghi\#
+- abcdefghi\#abdefghi\#
+
+=== Prova de Irregularidade por Bombeamento
+Provaremos a irregularidade dessa linguagem $L$ através do lema do bombeamento:
++ Assumimos que existe uma constante $p >= 1$ como o lema pede.
++ Utilizaremos $w in L = a^p\#a^p\#$, que é maior que $p$.
++ Como as duas palavras possuem apenas o mesmo símbolo repetido $a$, suas somas só serão iguais caso
+  o número de $a$'s sejam iguais, independente de $m$.
++ Pelo lema do bombeamento, deve existir uma decomposição $w = x y z$ com $|x y| <= p$ e $|y| >= 1$
+  tal que $x y^i z in L$ para todo $i >= 0$.
++ Como $|x y| <= p$, $y$ contém apenas $a$'s pertencentes à primeira palavra.
++ Bombeando $y$ para termos $x y^2 z$ nos dá um resultado com mais $a$'s na primeira palavra do que
+  na segunda, pois a segunda palavra permanece inalterada.
++ Logo, $x y^2 z$ não está em $L$, pois a soma das duas palavras não é a mesma.
++ Logo, $L$ não é regular.
+
+
+
+#figure(
+  image("pda.png"),
+  caption: [Diagrama do autômato reconhecedor para $m=3$],
+)
+
+== A Gramática
+
+Em seguida será definida a GLC que descreve o sistema. A ideia por trás da gramática é utilizar as
+variáveis para guardar a diferença atual entre os valores das duas palavras. As únicas variáveis com
+uma produção terminal são as que possuem uma diferença de 0, representando uma entrada balanceada.
+
+Para casos de $m > 1$, precisamos também guardar o expoente do próximo símbolo de cada palavra. As
+variáveis terão o formato $V_(Delta,i,j)$, onde $Delta = h(w_2) - h(w_1)$ (a diferença entre os
+valores das palavras) e $i$, $j$ são os "contadores" módulo $m$ dos expoentes das palavras $w_1$ e
+$w_2$. A variável inicial é $V_(0,0,m-1)$.
+
+Cada variável terá uma produção para cada símbolo "dígito" da entrada. As produções são construídas
+de forma que $Delta$ se movimente sempre em direção à $0$, então variáveis da forma
+$V_(Delta > 0,i,j)$ terão produções que adicionam à $w_1$, e vice-versa. A magnitude desse
+"movimento" depende do dígito que será produzido e o contador do expoente atual. As produções então
+têm um dos seguintes formatos:
+
+#grid(
+  columns: (1fr, 1fr),
+  [
+    $
+      Delta < 0: cases(
+        V_(Delta,i,j) -> V_(Delta',i,j') a,
+        Delta' = Delta + p(a) * b^j,
+        j' = (j - 1) mod m,
+        a in T - "#"
+      )
+    $
+
+  ],
+  [
+    $
+      Delta >= 0: cases(
+        V_(Delta,i,j) -> a V_(Delta',i',j),
+        Delta' = Delta - p(a) * b^i,
+        i' = (i + 1) mod m,
+        a in T - "#"
+      )
+    $
+
+  ],
+)
+
+
+Dessa forma, a diferença entre as duas palavras nunca ultrapassará $b^m$ para uma base $b$. Assim
+conseguimos manter o número de variáveis finito. O tamanho da gramática final é de aproximadamente
+$2m * b^m$ variáveis e $2m * b^m (b-1)$ produções. Por exemplo, uma gramática com base $b = 10$ e
+tamanho de bloco $m = 3$ terá $~6.000$ variáveis e $~60.000$ produções. Por causa disso, juntamente
+com o fato de que a ferramenta JFLAP não suporta gramáticas com mais de 26 variáveis, o arquivo
+_.jff_ da GLC será feito com base $b=10$ e $m=1$. Entretanto, como o autômato possui uma estrutura
+mais simples, também será anexado um arquivo _.jff_ do autômato feito com base $b=10$ e $m=3$.
+
+Vale notar que esse método constrói uma gramática deterministica, o que não é surpreendente, dado
+que o autômato reconhecedor também é determinístico. Um algorítmo como o reconhecedor de _Earley_ é
+então capaz de processar uma palavra dessa gramática em _O(n)_ passos.
+
+Segue a gramática resultante para base $b = 4$ e tamanho de bloco $m = 2$ com terminais
+$T = {1,2,3,\#}$, $p(x) = x$, e variável inicial $V_(0,0,1)$:
+
 #table(
-  columns: 7,
-  table.header[*$q_0$*][*$q_1$*][*$q_2$*][*$q_3$*][*$q_0$*][*$q_0$*][*$q_0$*][*$q_0$*][*$r_f$*]
-  [$delta(q_0, a, epsilon) -> (q_1, x^1)$],
-  [$delta(q_0, b, epsilon) -> (q_1, x^2)$],
-  [$delta(q_0, c, epsilon) -> (q_1, x^3)$],
-  [$delta(q_0, d, epsilon) -> (q_1, x^4)$],
-  [$delta(q_0, e, epsilon) -> (q_1, x^5)$],
-  [$delta(q_0, f, epsilon) -> (q_1, x^6)$],
-  [$delta(q_0, g, epsilon) -> (q_1, x^7)$],
+  columns: 1,
 
-  [$delta(q_0, h, epsilon) -> (q_1, x^8)$],
-  [$delta(q_0, i, epsilon) -> (q_1, x^9)$],
-  [$delta(q_0, \#, epsilon) -> (r_0, epsilon)$],
-
-  [$delta(q_1, a, epsilon) -> (q_2, x^10)$],
-  [$delta(q_1, b, epsilon) -> (q_2, x^20)$],
-  [$delta(q_1, c, epsilon) -> (q_2, x^30)$],
-  [$delta(q_1, d, epsilon) -> (q_2, x^40)$],
-  [$delta(q_1, e, epsilon) -> (q_2, x^50)$],
-  [$delta(q_1, f, epsilon) -> (q_2, x^60)$],
-  [$delta(q_1, g, epsilon) -> (q_2, x^70)$],
-
-  [$delta(q_1, h, epsilon) -> (q_2, x^80)$],
-  [$delta(q_1, i, epsilon) -> (q_2, x^90)$],
-  [$delta(q_1, \#, epsilon) -> (r_0, epsilon)$],
-
-  [$delta(q_2, a, epsilon) -> (q_2, x^100)$],
-  [$delta(q_2, b, epsilon) -> (q_2, x^200)$],
-  [$delta(q_2, c, epsilon) -> (q_2, x^300)$],
-  [$delta(q_2, d, epsilon) -> (q_2, x^400)$],
-  [$delta(q_2, e, epsilon) -> (q_2, x^500)$],
-  [$delta(q_2, f, epsilon) -> (q_2, x^600)$],
-  [$delta(q_2, g, epsilon) -> (q_2, x^700)$],
-
-  [$delta(q_2, h, epsilon) -> (q_2, x^800)$],
-  [$delta(q_2, i, epsilon) -> (q_2, x^900)$],
-  [$delta(q_2, \#, epsilon) -> (r_0, epsilon)$],
-
-  [$delta(q_3, a, epsilon) -> (q_0, x^1000)$],
-  [$delta(q_3, b, epsilon) -> (q_0, x^2000)$],
-  [$delta(q_3, c, epsilon) -> (q_0, x^3000)$],
-  [$delta(q_3, d, epsilon) -> (q_0, x^4000)$],
-  [$delta(q_3, e, epsilon) -> (q_0, x^5000)$],
-  [$delta(q_3, f, epsilon) -> (q_0, x^6000)$],
-  [$delta(q_3, g, epsilon) -> (q_0, x^7000)$],
-
-  [$delta(q_3, h, epsilon) -> (q_0, x^8000)$],
-  [$delta(q_3, i, epsilon) -> (q_0, x^9000)$],
-  [$delta(q_3, \#, epsilon) -> (r_0, epsilon)$],
+  [$V_(0,0,1) -> 1 V_(-1,1,1) | 3 V_(-3,1,1) | 2 V_(-2,1,1) | \#$],
+  [$V_(0,1,1) := 3 V_(-12,0,1) | 1 V_(-4,0,1) | 2 V_(-8,0,1) | \#$],
+  [$V_(0,1,0) := 3 V_(-12,0,0) | 2 V_(-8,0,0) | 1 V_(-4,0,0)$],
+  [$V_(0,0,0) := 1 V_(-1,1,0) | 2 V_(-2,1,0) | 3 V_(-3,1,0)$],
+  [$V_(-12,0,0) := V_(-11,0,1) 1 | V_(-9,0,1) 3 | V_(-10,0,1) 2$],
+  [$V_(-12,0,1) := V_(-8,0,0) 1 | V_(-4,0,0) 2 | V_(0,0,0) 3$],
+  [$V_(-11,0,0) := V_(-9,0,1) 2 | V_(-8,0,1) 3 | V_(-10,0,1) 1$],
+  [$V_(-11,0,1) := V_(-7,0,0) 1 | V_(-3,0,0) 2 | V_(1,0,0) 3$],
+  [$V_(-10,0,0) := V_(-8,0,1) 2 | V_(-9,0,1) 1 | V_(-7,0,1) 3$],
+  [$V_(-10,0,1) := V_(2,0,0) 3 | V_(-6,0,0) 1 | V_(-2,0,0) 2$],
+  [$V_(-9,0,1) := V_(-1,0,0) 2 | V_(-5,0,0) 1 | V_(3,0,0) 3$],
+  [$V_(-9,0,0) := V_(-6,0,1) 3 | V_(-8,0,1) 1 | V_(-7,0,1) 2$],
+  [$V_(-8,0,0) := V_(-7,0,1) 1 | V_(-6,0,1) 2 | V_(-5,0,1) 3$],
+  [$V_(-8,0,1) := V_(4,0,0) 3 | V_(-4,0,0) 1 | V_(0,0,0) 2$],
+  [$V_(-7,0,0) := V_(-5,0,1) 2 | V_(-4,0,1) 3 | V_(-6,0,1) 1$],
+  [$V_(-7,0,1) := V_(-3,0,0) 1 | V_(1,0,0) 2 | V_(5,0,0) 3$],
+  [$V_(-6,0,0) := V_(-5,0,1) 1 | V_(-3,0,1) 3 | V_(-4,0,1) 2$],
+  [$V_(-6,0,1) := V_(-2,0,0) 1 | V_(2,0,0) 2 | V_(6,0,0) 3$],
+  [$V_(-5,0,0) := V_(-3,0,1) 2 | V_(-4,0,1) 1 | V_(-2,0,1) 3$],
+  [$V_(-5,0,1) := V_(7,0,0) 3 | V_(3,0,0) 2 | V_(-1,0,0) 1$],
+  [$V_(-4,0,1) := V_(0,0,0) 1 | V_(4,0,0) 2 | V_(8,0,0) 3$],
+  [$V_(-4,0,0) := V_(-2,0,1) 2 | V_(-1,0,1) 3 | V_(-3,0,1) 1$],
+  [$V_(-3,1,0) := V_(-1,1,1) 2 | V_(0,1,1) 3 | V_(-2,1,1) 1$],
+  [$V_(-3,1,1) := V_(1,1,0) 1 | V_(5,1,0) 2 | V_(9,1,0) 3$],
+  [$V_(-3,0,0) := V_(-1,0,1) 2 | V_(-2,0,1) 1 | V_(0,0,1) 3$],
+  [$V_(-3,0,1) := V_(9,0,0) 3 | V_(1,0,0) 1 | V_(5,0,0) 2$],
+  [$V_(-2,1,1) := V_(6,1,0) 2 | V_(2,1,0) 1 | V_(10,1,0) 3$],
+  [$V_(-2,0,1) := V_(2,0,0) 1 | V_(10,0,0) 3 | V_(6,0,0) 2$],
+  [$V_(-2,1,0) := V_(-1,1,1) 1 | V_(0,1,1) 2 | V_(1,1,1) 3$],
+  [$V_(-2,0,0) := V_(-1,0,1) 1 | V_(1,0,1) 3 | V_(0,0,1) 2$],
+  [$V_(-1,1,0) := V_(1,1,1) 2 | V_(0,1,1) 1 | V_(2,1,1) 3$],
+  [$V_(-1,0,1) := V_(11,0,0) 3 | V_(7,0,0) 2 | V_(3,0,0) 1$],
+  [$V_(-1,0,0) := V_(2,0,1) 3 | V_(1,0,1) 2 | V_(0,0,1) 1$],
+  [$V_(-1,1,1) := V_(7,1,0) 2 | V_(11,1,0) 3 | V_(3,1,0) 1$],
+  [$V_(1,1,1) := 3 V_(-11,0,1) | 1 V_(-3,0,1) | 2 V_(-7,0,1)$],
+  [$V_(1,1,0) := 1 V_(-3,0,0) | 2 V_(-7,0,0) | 3 V_(-11,0,0)$],
+  [$V_(1,0,1) := 1 V_(0,1,1) | 2 V_(-1,1,1) | 3 V_(-2,1,1)$],
+  [$V_(1,0,0) := 2 V_(-1,1,0) | 3 V_(-2,1,0) | 1 V_(0,1,0)$],
+  [$V_(2,0,0) := 1 V_(1,1,0) | 2 V_(0,1,0) | 3 V_(-1,1,0)$],
+  [$V_(2,0,1) := 2 V_(0,1,1) | 3 V_(-1,1,1) | 1 V_(1,1,1)$],
+  [$V_(2,1,0) := 3 V_(-10,0,0) | 1 V_(-2,0,0) | 2 V_(-6,0,0)$],
+  [$V_(2,1,1) := 1 V_(-2,0,1) | 3 V_(-10,0,1) | 2 V_(-6,0,1)$],
+  [$V_(3,1,0) := 2 V_(-5,0,0) | 3 V_(-9,0,0) | 1 V_(-1,0,0)$],
+  [$V_(3,0,0) := 3 V_(0,1,0) | 1 V_(2,1,0) | 2 V_(1,1,0)$],
+  [$V_(4,0,0) := 1 V_(3,1,0) | 3 V_(1,1,0) | 2 V_(2,1,0)$],
+  [$V_(4,1,0) := 1 V_(0,0,0) | 2 V_(-4,0,0) | 3 V_(-8,0,0)$],
+  [$V_(5,0,0) := 1 V_(4,1,0) | 2 V_(3,1,0) | 3 V_(2,1,0)$],
+  [$V_(5,1,0) := 2 V_(-3,0,0) | 3 V_(-7,0,0) | 1 V_(1,0,0)$],
+  [$V_(6,1,0) := 2 V_(-2,0,0) | 3 V_(-6,0,0) | 1 V_(2,0,0)$],
+  [$V_(6,0,0) := 1 V_(5,1,0) | 3 V_(3,1,0) | 2 V_(4,1,0)$],
+  [$V_(7,1,0) := 2 V_(-1,0,0) | 1 V_(3,0,0) | 3 V_(-5,0,0)$],
+  [$V_(7,0,0) := 1 V_(6,1,0) | 2 V_(5,1,0) | 3 V_(4,1,0)$],
+  [$V_(8,0,0) := 1 V_(7,1,0) | 2 V_(6,1,0) | 3 V_(5,1,0)$],
+  [$V_(8,1,0) := 2 V_(0,0,0) | 3 V_(-4,0,0) | 1 V_(4,0,0)$],
+  [$V_(9,0,0) := 3 V_(6,1,0) | 1 V_(8,1,0) | 2 V_(7,1,0)$],
+  [$V_(9,1,0) := 1 V_(5,0,0) | 2 V_(1,0,0) | 3 V_(-3,0,0)$],
+  [$V_(10,0,0) := 1 V_(9,1,0) | 3 V_(7,1,0) | 2 V_(8,1,0)$],
+  [$V_(10,1,0) := 2 V_(2,0,0) | 3 V_(-2,0,0) | 1 V_(6,0,0)$],
+  [$V_(11,1,0) := 2 V_(3,0,0) | 3 V_(-1,0,0) | 1 V_(7,0,0)$],
+  [$V_(11,0,0) := 2 V_(9,1,0) | 1 V_(10,1,0) | 3 V_(8,1,0)$],
 )
